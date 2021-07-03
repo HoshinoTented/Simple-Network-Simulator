@@ -1,21 +1,22 @@
 package org.hoshino9.network.impl
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.hoshino9.network.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-internal class HostImpl<Ip, P>(override val ip: Ip, val program: suspend Host<Ip, P>.() -> Unit) : Host<Ip, P> {
+internal class HostImpl<Ip, Port, P>(override val ip: Ip, val program: suspend Host<Ip, Port, P>.() -> Unit) : Host<Ip, Port, P> {
     override val coroutineContext: CoroutineContext
         get() = EmptyCoroutineContext
 
-    override lateinit var network: Network<Ip, P>
+    override lateinit var network: Network<Ip, Port, P>
     override var status: Status = Status.Created
 
-    private lateinit var pipe: NetworkPipe<Ip, P>
+    private lateinit var pipe: NetworkPipe<Socket<Ip, Port>, P>
 
     override suspend fun start() {
-        this.status = checkForStart(status)
+        this.status = checkCreated(status)
 
         launch {
             program()
@@ -23,18 +24,20 @@ internal class HostImpl<Ip, P>(override val ip: Ip, val program: suspend Host<Ip
         }
     }
 
-    override suspend fun onConfigure(network: Network<Ip, P>, pipe: NetworkPipe<Ip, P>) {
+    override suspend fun onConfigure(network: Network<Ip, Port, P>, pipe: NetworkPipe<Socket<Ip, Port>, P>) {
+        checkCreated(status)
+
         this.network = network
         this.pipe = pipe
     }
 
-    override suspend fun sendTo(dest: Ip, content: P) {
-        val packet = SimplePacket(ip, dest, false, content)
+    override suspend fun sendTo(port: Port, dest: Socket<Ip, Port>, content: P) {
+        val packet = SimplePacket(Socket(ip, port), dest, false, content)
 
         pipe.send(packet)
     }
 
-    override suspend fun receive(): Packet<Ip, P>? {
+    override suspend fun receive(): Packet<Socket<Ip, Port>, P>? {
         return pipe.receive()
     }
 }

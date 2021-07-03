@@ -3,9 +3,9 @@ package org.hoshino9.network
 import kotlinx.coroutines.CoroutineScope
 import org.hoshino9.network.impl.HostImpl
 
-interface Host<Ip, P> : CoroutineScope {
+interface Host<Ip, Port, P> : CoroutineScope {
     val ip: Ip
-    val network: Network<Ip, P>
+    val network: Network<Ip, Port, P>
     val status: Status
 
     /**
@@ -16,12 +16,12 @@ interface Host<Ip, P> : CoroutineScope {
     /**
      * 在被添加到 [Network] 中后，[Network.start] 时被调用，并且仅调用一次
      */
-    suspend fun onConfigure(network: Network<Ip, P>, pipe: NetworkPipe<Ip, P>)
+    suspend fun onConfigure(network: Network<Ip, Port, P>, pipe: NetworkPipe<Socket<Ip, Port>, P>)
 
-    suspend fun sendTo(dest: Ip, content: P)
-    suspend fun receive(): Packet<Ip, P>?
+    suspend fun sendTo(port: Port, dest: Socket<Ip, Port>, content: P)
+    suspend fun receive(): Packet<Socket<Ip, Port>, P>?
 }
 
-fun <Ip, P> Host(ip: Ip, program: suspend Host<Ip, P>.() -> Unit): Host<Ip, P> {
+fun <Ip, Port, P> Host(ip: Ip, program: suspend Host<Ip, Port, P>.() -> Unit): Host<Ip, Port, P> {
     return HostImpl(ip, program)
 }

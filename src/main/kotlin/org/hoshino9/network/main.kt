@@ -1,24 +1,30 @@
 package org.hoshino9.network
 
+import kotlinx.coroutines.isActive
+
 suspend fun main() {
-    val network = Network<Ipv0, String>()
-    val host0 = Host<Ipv0, String>(Ipv0(0)) {
-        sendTo(Ipv0(1), "Hello")
+    val network = Network<Ipv0, Int, String>()
+    val host0 = Host<Ipv0, Int, String>(Ipv0(0)) {
+        sendTo(114, Socket(Ipv0(1), 514), "Hello")
         println("Host0 Dead")
     }
 
-    val host1 = Host<Ipv0, String>(Ipv0(1)) {
+    val host1 = Host<Ipv0, Int, String>(Ipv0(1)) {
         while (true) {
             val packet = receive() ?: continue
+            val source = packet.source
             val content = packet.decode() ?: continue
 
+            println("from ${source.ip}:${source.port}")
             println(content)
             println("Host1 Dead")
+
+            break
         }
     }
 
-    network.add(host0)
-    network.add(host1)
+    network.register(host1)
+    network.register(host0)
 
     network.start()
 

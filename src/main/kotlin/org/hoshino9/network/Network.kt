@@ -4,10 +4,10 @@ import kotlinx.coroutines.CoroutineScope
 import org.hoshino9.network.impl.NetworkImpl
 import kotlin.coroutines.CoroutineContext
 
-typealias NetworkPipe<Ip, T> = Pipe<Packet<Ip, T>>
+typealias NetworkPipe<Socket, T> = Pipe<Packet<Socket, T>>
 
-interface Network<Ip, P> : CoroutineScope, CoroutineContext.Element {
-    object Key : CoroutineContext.Key<Network<*, *>>
+interface Network<Ip, Port, P> : CoroutineScope, CoroutineContext.Element {
+    object Key : CoroutineContext.Key<Network<*, *, *>>
 
     val status: Status
 
@@ -25,11 +25,11 @@ interface Network<Ip, P> : CoroutineScope, CoroutineContext.Element {
     /**
      * 将一个 [Host] 添加到这个 [Network] 中，并且该 [Host] 应该处于创建阶段（未被 [Host.start]）
      */
-    fun add(host: Host<Ip, P>)
+    fun register(host: Host<Ip, Port, P>)
 
     suspend fun join()
 }
 
-fun <Ip, P> Network(): Network<Ip, P> {
+fun <Ip, Port, P> Network(): Network<Ip, Port, P> {
     return NetworkImpl()
 }

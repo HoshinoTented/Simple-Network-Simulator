@@ -1,6 +1,8 @@
 package org.hoshino9.network
 
-fun checkForStart(status: Status): Status {
+import java.lang.Exception
+
+fun checkCreated(status: Status): Status {
     check(status === Status.Created) {
         "Network has been Started or already Dead"
     }
@@ -12,4 +14,8 @@ fun checkStarted(status: Status) {
     check(status === Status.Started) {
         "Network isn't Started or already Dead"
     }
+}
+
+fun unreachable(): Nothing {
+    throw Exception("Unreachable")
 }
